@@ -110,7 +110,7 @@ def main(url):
     status.append(shortening_service(url))
 
     print(status)
-
+    return(status)
     # printLinks(response)
 
 
