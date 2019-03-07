@@ -3,7 +3,7 @@ from urllib import error
 from urllib import request
 import sys
 import re
-#from BeautifulSoup import BeautifulSoup, SoupStrainer
+from bs4 import BeautifulSoup, SoupStrainer
 
 def getResponse(url):
     try:
@@ -93,10 +93,10 @@ def shortening_service(url):
     else:
         return 1
 
-# def printLinks(resp):
-#     for link in BeautifulSoup(resp, parse_only=SoupStrainer('a')):
-#         if link.has_attr('href'):
-#            print (link['href'])
+def printLinks(resp):
+    for link in BeautifulSoup(resp, parse_only=SoupStrainer('a')):
+        if link.has_attr('href'):
+           print (link['href'])
 
 
 def main(url):
@@ -109,10 +109,9 @@ def main(url):
     status.append(url_length(url))
     status.append(shortening_service(url))
 
-    print(status)
+    # print(status)
+    printLinks(response)
     return(status)
-    # printLinks(response)
-
 
 #if __name__ == "__main__":
 main(sys.argv[1])
