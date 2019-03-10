@@ -3,6 +3,9 @@ from urllib import error
 from urllib import request
 import sys
 import re
+import whois
+from datetime import datetime
+import time
 from bs4 import BeautifulSoup, SoupStrainer
 
 def getResponse(url):
@@ -87,30 +90,134 @@ def shortening_service(url):
                       '|1link\.in|sharetabs\.com|shoturl\.us|fff\.to|hover\.com|lnk\.in|jmp2\.net|dy\.fi|urlcover\.com|2pl\.us|tweetburner\.com|u6e\.de'
                       '|xaddr\.com|gl\.am|dfl8\.me|go\.9nl\.com|gurl\.es|C-O\.IN|TraceURL\.com|liurl\.cn|MyURL\.in|urlenco\.de|ne1\.net|buk\.me|rsmonkey\.com|cuturl\.com|turo\.us'
                       '|sqrl\.it|iterasi\.net|tiny123\.com|EsyURL\.com|urlx\.org'
-                      '|IsCool\.net|twitterpan\.com|GoWat\.ch|poprl\.com|njx\.me',url)
+                      '|IsCool\.net|twitterpan\.com|GoWat\.ch|poprl\.com|njx\.me',str(url))
     if match:
         return -1
     else:
         return 1
 
-def printLinks(resp):
-    for link in BeautifulSoup(resp, parse_only=SoupStrainer('a')):
-        if link.has_attr('href'):
-           print (link['href'])
+def shortening_service_redirect(resp):
+    #read html code
+    html = resp.read()
 
+    #use re.findall to get all the links
+    links = re.findall('"((http|ftp)s?://.*?)"', str(html))
+    links = [l[0] for l in links]
+    for l in links:
+        if shortening_service(l) == -1:
+            #print(shortening_service(l))
+            return 0
+    return 1
+
+def domain_registry_expiration(domain):
+    expiration_date = domain.expiration_date
+    # today = time.strftime('%Y-%m-%d')
+    today = datetime.today()
+
+    registration_length = 0
+    # Some domains do not have expiration dates. The application should not raise an error if this is the case.
+    if expiration_date:
+        registration_length = abs((expiration_date - today).days)
+    if registration_length / 365 <= 1:
+        return -1
+    else:
+        return 1
+
+def double_slash_redirecting(url):
+    # since the position starts from, we have given 6 and not 7 which is according to the document
+    list = [x.start(0) for x in re.finditer('//', url)]
+    if list[len(list) - 1] > 6:
+        return -1
+    else:
+        return 1
+
+def prefix_suffix(domain):
+    match = re.search('-', domain)
+    if match:
+        return -1
+    else:
+        return 1
+
+
+def request_url(wiki, soup, domain):
+    i = 0
+    success = 0
+    for img in soup.find_all('img', src=True):
+        dots = [x.start(0) for x in re.finditer('\.', img['src'])]
+        if wiki in img['src'] or domain in img['src'] or len(dots) == 1:
+            success = success + 1
+        i = i + 1
+
+    for audio in soup.find_all('audio', src=True):
+        dots = [x.start(0) for x in re.finditer('\.', audio['src'])]
+        if wiki in audio['src'] or domain in audio['src'] or len(dots) == 1:
+            success = success + 1
+        i = i + 1
+
+    for embed in soup.find_all('embed', src=True):
+        dots = [x.start(0) for x in re.finditer('\.', embed['src'])]
+        if wiki in embed['src'] or domain in embed['src'] or len(dots) == 1:
+            success = success + 1
+        i = i + 1
+
+    for i_frame in soup.find_all('i_frame', src=True):
+        dots = [x.start(0) for x in re.finditer('\.', i_frame['src'])]
+        if wiki in i_frame['src'] or domain in i_frame['src'] or len(dots) == 1:
+            success = success + 1
+        i = i + 1
+
+    try:
+        percentage = success / float(i) * 100
+    except:
+        return 1
+
+    if percentage < 22.0:
+        return 1
+    elif 22.0 <= percentage < 61.0:
+        return 0
+    else:
+        return -1
 
 def main(url):
+
     status = []
 
     hostname = getHostname(url)
     response = getResponse(url)
 
-    status.append(having_ip_address(url))
-    status.append(url_length(url))
-    status.append(shortening_service(url))
+    # with open('markup.txt', 'r') as file:
+    #     soup_string = file.read()
+    soup_string = response.read()
+    soup = BeautifulSoup(soup_string, 'html.parser')
 
-    # print(status)
-    printLinks(response)
+##1st feature added
+    status.append(having_ip_address(url))
+##2nd feature added
+    status.append(url_length(url))
+##3rd feature added
+    status.append(shortening_service(url))
+    # print(shortening_service_redirect(response))
+##4th feature added
+    status.append(shortening_service_redirect(response))
+
+##5th feature  added
+    dns = 1
+    try:
+        domain = whois.query(hostname)
+    except:
+        dns = -1
+
+    if dns == -1:
+        status.append(-1)
+    else:
+        status.append(domain_registry_expiration(whois.query(hostname)))
+
+##6th feature added
+    status.append(double_slash_redirecting(url))
+##7th feature added
+    status.append(request_url(url, soup, hostname))
+
+    print(status)
     return(status)
 
 #if __name__ == "__main__":
