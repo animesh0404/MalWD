@@ -266,6 +266,26 @@ def mail_redirection(soup):
             return 1
     return 1
 
+#Detection od anomaly url
+def abnormal_url(domain, url):
+    hostname = domain.name
+    match = re.search(hostname, url)
+    if match:
+        return 1
+    else:
+        return -1
+
+
+# IFrame Redirection
+def i_frame(soup):
+    for i_frame in soup.find_all('i_frame', width=True, height=True, frameBorder=True):
+        if i_frame['width'] == "0" and i_frame['height'] == "0" and i_frame['frameBorder'] == "0":
+            return -1
+        else:
+            return 1
+    return 1
+
+
 def main(url):
 
     status = []
@@ -273,6 +293,8 @@ def main(url):
     hostname = getHostname(url)
     response = getResponse(url)
 
+    if not response:
+        exit()
     # with open('markup.txt', 'r') as file:
     #     soup_string = file.read()
     soup_string = response.read()
@@ -315,6 +337,15 @@ def main(url):
     status.append(sfh(url,soup,hostname))
 ##12th feature added
     status.append(mail_redirection(soup))
+##13th feature added
+    if dns == -1:
+        status.append(-1)
+    else:
+        status.append(abnormal_url(domain, url))
+
+    status.append(i_frame(soup))
+
+
     print(status)
     return(status)
 
