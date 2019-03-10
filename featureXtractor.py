@@ -139,7 +139,7 @@ def prefix_suffix(domain):
         return 1
 
 
-def request_url(wiki, soup, domain):
+def crossdomain_req_url(wiki, soup, domain):
     i = 0
     success = 0
     for img in soup.find_all('img', src=True):
@@ -178,6 +178,16 @@ def request_url(wiki, soup, domain):
     else:
         return -1
 
+def https_token(url):
+    match = re.search('https://|http://', url)
+    if match.start(0) == 0:
+        url = url[match.end(0):]
+    match = re.search('http|https', url)
+    if match:
+        return -1
+    else:
+        return 1
+
 def main(url):
 
     status = []
@@ -215,8 +225,10 @@ def main(url):
 ##6th feature added
     status.append(double_slash_redirecting(url))
 ##7th feature added
-    status.append(request_url(url, soup, hostname))
-
+    status.append(crossdomain_req_url(url, soup, hostname))
+##8th feature added
+    status.append(https_token(url))
+    
     print(status)
     return(status)
 
