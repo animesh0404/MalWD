@@ -10,7 +10,10 @@ from bs4 import BeautifulSoup, SoupStrainer
 
 def getResponse(url):
     try:
-        response = urllib.request.urlopen(url)
+        opener = request.build_opener()
+        opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+        response = opener.open(url)
+        # response = urllib.request.urlopen(url)
     except urllib.error.HTTPError as e:
         print('The server couldn\'t fulfill the request.')
         print('Error code: ', e.code)
@@ -111,7 +114,7 @@ def shortening_service_redirect(resp):
 
 def domain_registry_expiration(domain):
     expiration_date = domain.expiration_date
-    # today = time.strftime('%Y-%m-%d')
+    
     today = datetime.today()
 
     registration_length = 0
