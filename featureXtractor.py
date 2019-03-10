@@ -117,7 +117,7 @@ def domain_registry_expiration(domain):
     registration_length = 0
     # Some domains do not have expiration dates. The application should not raise an error if this is the case.
     if expiration_date:
-        registration_length = abs((expiration_date - today).days)
+        registration_length = abs((expiration_date.date() - today.date()).days)
     if registration_length / 365 <= 1:
         return -1
     else:
@@ -139,30 +139,30 @@ def prefix_suffix(domain):
         return 1
 
 
-def crossdomain_req_url(wiki, soup, domain):
+def crossdomain_req_url(url, soup, domain):
     i = 0
     success = 0
     for img in soup.find_all('img', src=True):
         dots = [x.start(0) for x in re.finditer('\.', img['src'])]
-        if wiki in img['src'] or domain in img['src'] or len(dots) == 1:
+        if url in img['src'] or domain in img['src'] or len(dots) == 1:
             success = success + 1
         i = i + 1
 
     for audio in soup.find_all('audio', src=True):
         dots = [x.start(0) for x in re.finditer('\.', audio['src'])]
-        if wiki in audio['src'] or domain in audio['src'] or len(dots) == 1:
+        if url in audio['src'] or domain in audio['src'] or len(dots) == 1:
             success = success + 1
         i = i + 1
 
     for embed in soup.find_all('embed', src=True):
         dots = [x.start(0) for x in re.finditer('\.', embed['src'])]
-        if wiki in embed['src'] or domain in embed['src'] or len(dots) == 1:
+        if url in embed['src'] or domain in embed['src'] or len(dots) == 1:
             success = success + 1
         i = i + 1
 
     for i_frame in soup.find_all('i_frame', src=True):
         dots = [x.start(0) for x in re.finditer('\.', i_frame['src'])]
-        if wiki in i_frame['src'] or domain in i_frame['src'] or len(dots) == 1:
+        if url in i_frame['src'] or domain in i_frame['src'] or len(dots) == 1:
             success = success + 1
         i = i + 1
 
@@ -188,7 +188,7 @@ def https_token(url):
     else:
         return 1
 
-def links_in_anchor(wiki, soup, domain):
+def links_in_anchor(url, soup, domain):
     i = 0
     unsafe = 0
     for a in soup.find_all('a', href=True):
@@ -196,7 +196,7 @@ def links_in_anchor(wiki, soup, domain):
         # might not be
         # there in the actual a['href']
         if "#" in a['href'] or "javascript" in a['href'].lower() or "mailto" in a['href'].lower() or not (
-                        wiki in a['href'] or domain in a['href']):
+                        url in a['href'] or domain in a['href']):
             unsafe = unsafe + 1
         i = i + 1
         # print a['href']
@@ -214,18 +214,18 @@ def links_in_anchor(wiki, soup, domain):
 
 
 #links in <link> and <script> links_in_tags
-def links_in_tags(wiki, soup, domain):
+def links_in_tags(url, soup, domain):
     i = 0
     success = 0
     for link in soup.find_all('link', href=True):
         dots = [x.start(0) for x in re.finditer('\.', link['href'])]
-        if wiki in link['href'] or domain in link['href'] or len(dots) == 1:
+        if url in link['href'] or domain in link['href'] or len(dots) == 1:
             success = success + 1
         i = i + 1
 
     for script in soup.find_all('script', src=True):
         dots = [x.start(0) for x in re.finditer('\.', script['src'])]
-        if wiki in script['src'] or domain in script['src'] or len(dots) == 1:
+        if url in script['src'] or domain in script['src'] or len(dots) == 1:
             success = success + 1
         i = i + 1
     try:
@@ -240,6 +240,17 @@ def links_in_tags(wiki, soup, domain):
     else:
         return -1
 
+# Server Form Handler (SFH)
+# to test pages that redirect to blank pages
+def sfh(url, soup, domain):
+    for form in soup.find_all('form', action=True):
+        if form['action'] == "" or form['action'] == "about:blank":
+            return -1
+        elif url not in form['action'] and domain not in form['action']:
+            return 0
+        else:
+            return 1
+    return 1
 
 def main(url):
 
@@ -286,6 +297,9 @@ def main(url):
     status.append(links_in_anchor(url,soup,hostname))
 ##10th feature added
     status.append(links_in_tags(url,soup,hostname))
+##11th feature added
+    status.append(sfh(url,soup,hostname))
+
 
     print(status)
     return(status)
