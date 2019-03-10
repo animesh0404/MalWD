@@ -114,7 +114,7 @@ def shortening_service_redirect(resp):
 
 def domain_registry_expiration(domain):
     expiration_date = domain.expiration_date
-    
+
     today = datetime.today()
 
     registration_length = 0
@@ -255,6 +255,17 @@ def sfh(url, soup, domain):
             return 1
     return 1
 
+# Mail redirection Detection
+# Since php code is processed at server-side no php source can be found in page content,
+# thus php's mailto function is not detected instead form action: mailto() function is detected
+def mail_redirection(soup):
+    for form in soup.find_all('form', action=True):
+        if "mailto:" in form['action']:
+            return -1
+        else:
+            return 1
+    return 1
+
 def main(url):
 
     status = []
@@ -302,8 +313,8 @@ def main(url):
     status.append(links_in_tags(url,soup,hostname))
 ##11th feature added
     status.append(sfh(url,soup,hostname))
-
-
+##12th feature added
+    status.append(mail_redirection(soup))
     print(status)
     return(status)
 
