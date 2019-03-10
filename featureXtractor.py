@@ -188,7 +188,7 @@ def https_token(url):
     else:
         return 1
 
-def links_in_url(wiki, soup, domain):
+def links_in_anchor(wiki, soup, domain):
     i = 0
     unsafe = 0
     for a in soup.find_all('a', href=True):
@@ -213,6 +213,34 @@ def links_in_url(wiki, soup, domain):
         return -1
 
 
+#links in <link> and <script> links_in_tags
+def links_in_tags(wiki, soup, domain):
+    i = 0
+    success = 0
+    for link in soup.find_all('link', href=True):
+        dots = [x.start(0) for x in re.finditer('\.', link['href'])]
+        if wiki in link['href'] or domain in link['href'] or len(dots) == 1:
+            success = success + 1
+        i = i + 1
+
+    for script in soup.find_all('script', src=True):
+        dots = [x.start(0) for x in re.finditer('\.', script['src'])]
+        if wiki in script['src'] or domain in script['src'] or len(dots) == 1:
+            success = success + 1
+        i = i + 1
+    try:
+        percentage = success / float(i) * 100
+    except:
+        return 1
+
+    if percentage < 17.0:
+        return 1
+    elif 17.0 <= percentage < 81.0:
+        return 0
+    else:
+        return -1
+
+
 def main(url):
 
     status = []
@@ -232,6 +260,7 @@ def main(url):
 ##3rd feature added
     status.append(shortening_service(url))
     # print(shortening_service_redirect(response))
+
 ##4th feature added
     status.append(shortening_service_redirect(response))
 
@@ -254,7 +283,9 @@ def main(url):
 ##8th feature added
     status.append(https_token(url))
 ##9th feature added
-    status.append(links_in_url(url,soup,hostname))
+    status.append(links_in_anchor(url,soup,hostname))
+##10th feature added
+    status.append(links_in_tags(url,soup,hostname))
 
     print(status)
     return(status)
