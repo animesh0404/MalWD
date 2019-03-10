@@ -188,6 +188,31 @@ def https_token(url):
     else:
         return 1
 
+def links_in_url(wiki, soup, domain):
+    i = 0
+    unsafe = 0
+    for a in soup.find_all('a', href=True):
+        # 2nd condition was 'JavaScript ::void(0)' but we put JavaScript because the space between javascript and ::
+        # might not be
+        # there in the actual a['href']
+        if "#" in a['href'] or "javascript" in a['href'].lower() or "mailto" in a['href'].lower() or not (
+                        wiki in a['href'] or domain in a['href']):
+            unsafe = unsafe + 1
+        i = i + 1
+        # print a['href']
+    try:
+        percentage = unsafe / float(i) * 100
+    except:
+        return 1
+    if percentage < 31.0:
+        return 1
+        # return percentage
+    elif 31.0 <= percentage < 67.0:
+        return 0
+    else:
+        return -1
+
+
 def main(url):
 
     status = []
@@ -228,7 +253,9 @@ def main(url):
     status.append(crossdomain_req_url(url, soup, hostname))
 ##8th feature added
     status.append(https_token(url))
-    
+##9th feature added
+    status.append(links_in_url(url,soup,hostname))
+
     print(status)
     return(status)
 
