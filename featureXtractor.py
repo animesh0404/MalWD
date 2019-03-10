@@ -342,7 +342,11 @@ def main(url):
         status.append(-1)
     else:
         status.append(abnormal_url(domain, url))
+<<<<<<< HEAD
 ##14 feature added
+=======
+
+>>>>>>> fd364d417b4d87689ea04efbf7a6ee573390bbfb
     status.append(i_frame(soup))
 
 
