@@ -1,10 +1,10 @@
 ========================================================================
 
-#Malicious Web-page detector Using Machine Learning (In Realtime):
+# Malicious Web-page detector Using Machine Learning (In Realtime):
 
 =======================================================================+
 
-##file Version: featureXtractor ver0.1
+## file Version: featureXtractor ver0.1
 
 ========================================================================
 
